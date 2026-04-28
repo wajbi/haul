@@ -54,10 +54,12 @@ def config_set(key: str, value: str):
 
 
 @config.command("init")
-def config_init():
+@click.option("--force", is_flag=True, default=False, help="Overwrite existing config.")
+def config_init(force: bool):
     """Create a default config file if none exists."""
-    if cfg.CONFIG_PATH.exists():
+    if cfg.CONFIG_PATH.exists() and not force:
         click.echo(f"Config already exists at {cfg.CONFIG_PATH}")
+        click.echo("Use --force to overwrite.")
         return
     cfg.save_config(cfg.DEFAULT_CONFIG.copy())
     click.echo(click.style("Initialized default config.", fg="green"))
