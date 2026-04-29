@@ -1,37 +1,37 @@
-"""CLI entry point for haul."""
+"""Main CLI entry point for haul."""
 
 import click
-from haul import config as cfg
-from haul.sync import sync_all
+from haul.config import get, set_value, load_config
+from haul.cli_status import status_cmd
+from haul.cli_conflicts import conflicts_cmd
+from haul.cli_history import history_cmd
+from haul.cli_profiles import profiles_cmd
 
 
 @click.group()
+@click.version_option("0.1.0", prog_name="haul")
 def cli():
-    """haul — sync your dotfiles across machines."""
-    pass
+    """haul — sync dotfiles across machines."""
 
-
-# ---------- config commands ----------
 
 @cli.group()
 def config():
     """Manage haul configuration."""
-    pass
 
 
 @config.command("show")
 def config_show():
-    """Print the current config."""
-    data = cfg.load_config()
-    for key, value in data.items():
+    """Print the current configuration."""
+    cfg = load_config()
+    for key, value in cfg.items():
         click.echo(f"{key} = {value}")
 
 
 @config.command("get")
 @click.argument("key")
 def config_get(key):
-    """Get a config value by key."""
-    value = cfg.get(key)
+    """Get a configuration value."""
+    value = get(key)
     if value is None:
         click.echo(f"Key '{key}' not found.", err=True)
         raise SystemExit(1)
@@ -42,36 +42,15 @@ def config_get(key):
 @click.argument("key")
 @click.argument("value")
 def config_set(key, value):
-    """Set a config value."""
-    cfg.set_value(key, value)
+    """Set a configuration value."""
+    set_value(key, value)
     click.echo(f"Set {key} = {value}")
 
 
-# ---------- sync commands ----------
-
-@cli.command()
-@click.option("--dry-run", is_flag=True, help="Preview changes without writing files.")
-def sync(dry_run):
-    """Sync dotfiles into the repo directory."""
-    data = cfg.load_config()
-    repo_dir = data.get("repo_dir", "")
-    dotfiles = data.get("dotfiles", [])
-
-    if not repo_dir:
-        click.echo("Error: 'repo_dir' is not configured. Run: haul config set repo_dir <path>", err=True)
-        raise SystemExit(1)
-
-    if not dotfiles:
-        click.echo("No dotfiles configured. Add entries under 'dotfiles' in your config.")
-        return
-
-    if dry_run:
-        click.echo("Dry run — no files will be written.\n")
-
-    results = sync_all(dotfiles, repo_dir, dry_run=dry_run)
-    for r in results:
-        icon = {"copied": "✔", "skipped": "–", "dry_run": "~"}.get(r["status"], "✘")
-        click.echo(f"  {icon}  {r['name']}  ({r['status']})")
+cli.add_command(status_cmd, name="status")
+cli.add_command(conflicts_cmd, name="conflicts")
+cli.add_command(history_cmd, name="history")
+cli.add_command(profiles_cmd, name="profiles")
 
 
 if __name__ == "__main__":
