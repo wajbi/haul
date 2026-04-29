@@ -32,6 +32,12 @@ Track a dotfile:
 haul add ~/.bashrc
 ```
 
+List all tracked dotfiles:
+
+```bash
+haul list
+```
+
 Sync dotfiles to another machine:
 
 ```bash
