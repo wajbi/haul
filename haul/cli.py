@@ -1,28 +1,34 @@
 """Main CLI entry point for haul."""
 
 import click
-from haul.config import get, set_value, load_config
+from haul.config import load_config, save_config, get, set_value
 from haul.cli_status import status_cmd
 from haul.cli_conflicts import conflicts_cmd
 from haul.cli_history import history_cmd
 from haul.cli_profiles import profiles_cmd
+from haul.cli_tags import tags_cmd
+from haul.cli_templates import templates_cmd
+from haul.cli_remotes import remotes_cmd
+
+CONFIG_FILE = ".haul/config.json"
 
 
 @click.group()
-@click.version_option("0.1.0", prog_name="haul")
 def cli():
     """haul — sync dotfiles across machines."""
+    pass
 
 
 @cli.group()
 def config():
     """Manage haul configuration."""
+    pass
 
 
 @config.command("show")
 def config_show():
-    """Print the current configuration."""
-    cfg = load_config()
+    """Show current configuration."""
+    cfg = load_config(CONFIG_FILE)
     for key, value in cfg.items():
         click.echo(f"{key} = {value}")
 
@@ -31,7 +37,8 @@ def config_show():
 @click.argument("key")
 def config_get(key):
     """Get a configuration value."""
-    value = get(key)
+    cfg = load_config(CONFIG_FILE)
+    value = get(cfg, key)
     if value is None:
         click.echo(f"Key '{key}' not found.", err=True)
         raise SystemExit(1)
@@ -43,15 +50,16 @@ def config_get(key):
 @click.argument("value")
 def config_set(key, value):
     """Set a configuration value."""
-    set_value(key, value)
+    cfg = load_config(CONFIG_FILE)
+    set_value(cfg, key, value)
+    save_config(CONFIG_FILE, cfg)
     click.echo(f"Set {key} = {value}")
 
 
-cli.add_command(status_cmd, name="status")
-cli.add_command(conflicts_cmd, name="conflicts")
-cli.add_command(history_cmd, name="history")
-cli.add_command(profiles_cmd, name="profiles")
-
-
-if __name__ == "__main__":
-    cli()
+cli.add_command(status_cmd, "status")
+cli.add_command(conflicts_cmd, "conflicts")
+cli.add_command(history_cmd, "history")
+cli.add_command(profiles_cmd, "profiles")
+cli.add_command(tags_cmd, "tags")
+cli.add_command(templates_cmd, "templates")
+cli.add_command(remotes_cmd, "remotes")
